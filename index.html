@@ -215,6 +215,12 @@
             </a>
           </li>
           <li class="sidebar-nav-item">
+            <a href="" class="sidebar-nav-link" id="private-link" data-section="private" aria-label="Private Tools">
+              <span class="sidebar-nav-icon"><i class="fa-solid fa-lock"></i></span>
+              <span>Private Tools</span>
+            </a>
+          </li>
+          <li class="sidebar-nav-item">
             <a href="" class="sidebar-nav-link" data-section="new" aria-label="New">
               <span class="sidebar-nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
               <span>New</span>
@@ -238,6 +244,24 @@
         <div class="container">
           <h1 class="rainbow-text"><i class="fas fa-toolbox"></i> Basic Collection</h1>
 
+          <div class="tools-grid">
+
+            <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
+              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
+                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
+                Ad eos vel temporibus?</p>
+              <a href="#" class="tool-link">Open</a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Private Section (only shown after correct password) -->
+      <section id="private-section" class="content-section">
+        <div class="container">
+          <h1 class="rainbow-text"><i class="fas fa-lock"></i> Private</h1>
           <div class="tools-grid">
 
             <div class="tool-card">
@@ -297,6 +321,7 @@
       <span class="mobile-nav-icon"><i class="fa-solid fa-house"></i></span>
       <span class="mobile-nav-text">Home</span>
     </a>
+    <a href="" class="mobile-nav-item" id="mobile-private-link" data-section="private" aria-label="Private">
     <a href="" class="mobile-nav-item" data-section="new" aria-label="New">
       <span class="mobile-nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
       <span class="mobile-nav-text">New</span>
@@ -306,6 +331,21 @@
     <button class="mobile-nav-item icon-toggle" id="theme-toggle-mobile" aria-label="Toggle theme"
       title="Toggle theme">🌙</button>
   </nav>
+
+  <!-- Password Modal -->
+  <div class="password-modal" id="password-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="password-modal-content">
+      <h2><i class="fa-solid fa-key"></i> Enter Password</h2>
+      <form id="password-form" autocomplete="off" novalidate>
+        <input type="password" id="password-input" placeholder="Password required" autocomplete="off">
+        <div class="modal-buttons">
+          <button id="cancel-password" type="button">Cancel</button>
+          <button id="submit-password" type="button">Submit</button>
+        </div>
+        <p class="password-error" id="password-error">Incorrect password</p>
+      </form>
+    </div>
+  </div>
 
   <!-- Global Center Loader -->
   <div id="global-loader" class="global-loader" aria-hidden="true">
@@ -334,6 +374,88 @@
         });
       }
       window.loadScriptOnce = loadScriptOnce;
+
+      // Password Modal wiring
+      const modal = document.getElementById('password-modal');
+      const form = document.getElementById('password-form');
+      const input = document.getElementById('password-input');
+      const errorEl = document.getElementById('password-error');
+      const submitBtn = document.getElementById('submit-password');
+      const cancelBtn = document.getElementById('cancel-password');
+
+      function openPasswordModal() {
+        modal?.classList.add('show');
+        modal?.setAttribute('aria-hidden', 'false');
+        if (errorEl) errorEl.style.display = 'none';
+        if (input) { input.value = ''; setTimeout(() => input.focus(), 0); }
+      }
+
+      function closePasswordModal() {
+        modal?.classList.remove('show');
+        modal?.setAttribute('aria-hidden', 'true');
+      }
+
+      function validatePassword(pw) {
+        if (typeof window.validatePrivatePassword === 'function') {
+          try { return !!window.validatePrivatePassword(pw); } catch { return false; }
+        }
+        if (typeof window.PRIVATE_PASSWORD === 'string') return pw === window.PRIVATE_PASSWORD;
+        return false;
+      }
+
+      function clearHashToHome() {
+        const url = window.location.pathname + window.location.search;
+        history.replaceState(null, '', url);
+      }
+
+      function handlePasswordSubmit() {
+        const pw = input ? input.value : '';
+        const ok = validatePassword(pw);
+        if (ok) {
+          hasPrivateAccess = true;
+          try { sessionStorage.setItem(PAK, '1'); } catch { }
+          if (errorEl) errorEl.style.display = 'none';
+          closePasswordModal();
+
+          // If user originally requested a private child route, go there after unlock
+          if (pendingPrivateRoute) {
+            const target = pendingPrivateRoute;
+            pendingPrivateRoute = null;
+            navigate(target);
+          } else {
+            navigate('private');
+          }
+
+          document.dispatchEvent(new CustomEvent('privateAccessGranted', { detail: { at: Date.now() } }));
+        } else {
+          if (errorEl) errorEl.style.display = 'block';
+          input?.focus();
+        }
+      }
+
+      form?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handlePasswordSubmit();
+      });
+
+      submitBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        handlePasswordSubmit();
+      });
+
+      cancelBtn?.addEventListener('click', () => {
+        closePasswordModal();
+        pendingPrivateRoute = null;
+        clearHashToHome();
+        showSection('home');
+      });
+
+      input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); cancelBtn?.click(); }
+      });
+
+      document.addEventListener('passwordRequested', openPasswordModal);
+
     })();
   </script>
 </body>
