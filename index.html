@@ -377,6 +377,10 @@
       }
       window.loadScriptOnce = loadScriptOnce;
 
+      const PAK = 'tools:pakaccess';
+      let hasPrivateAccess = sessionStorage.getItem(PAK) === '1';
+      let pendingPrivateRoute = null;
+
       // Password Modal wiring
       const modal = document.getElementById('password-modal');
       const form = document.getElementById('password-form');
@@ -458,6 +462,193 @@
 
       document.addEventListener('passwordRequested', openPasswordModal);
 
+      // Router helpers
+      
+      const STATIC_SECTIONS = ['home', 'private', 'new'];
+      const DYNAMIC_ROUTES = {};
+
+      const dynamicHost = document.getElementById('dynamic-host');
+      let currentDynamic = null;        // dynamic route currently mounted
+      let isLoadingDynamic = false;     // prevent duplicate async loads
+
+      function resolveRoute(route) {
+        if (DYNAMIC_ROUTES[route]?.aliasOf) return DYNAMIC_ROUTES[route].aliasOf;
+        return route;
+      }
+
+      // determine if a route is private (root private or any child under private)
+      function isPrivateRoute(sectionId) {
+        if (sectionId === 'private') return true;
+        const def = DYNAMIC_ROUTES[sectionId];
+        if (!def) return false;
+        return def.parent === 'private' || def.private === true || def.requiresAuth === true;
+      }
+
+      function visibleTargetFor(sectionId) {
+        // Gate both the private index and any private child route
+        if (isPrivateRoute(sectionId) && !hasPrivateAccess) return 'home';
+        if (STATIC_SECTIONS.includes(sectionId)) return sectionId;
+        if (DYNAMIC_ROUTES[sectionId]) return 'dynamic';
+        return 'home';
+      }
+
+      function setActiveNav(targetId) {
+        document.querySelectorAll('.sidebar-nav-link, .mobile-nav-item').forEach(item => item.classList.remove('active'));
+        let navKey = targetId;
+        if (DYNAMIC_ROUTES[targetId]?.parent) navKey = DYNAMIC_ROUTES[targetId].parent;
+        if (navKey === 'private' && !hasPrivateAccess) navKey = 'home';
+        document.querySelectorAll(`.sidebar-nav-link[data-section="${navKey}"], .mobile-nav-item[data-section="${navKey}"]`).forEach(item => {
+          item.classList.add('active');
+        });
+      }
+
+      function sanitizeCloneWithoutScripts(el) {
+        const wrapper = el.cloneNode(false);
+        for (let child = el.firstChild; child; child = child.nextSibling) {
+          if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'script') continue;
+          wrapper.appendChild(child.cloneNode(true));
+        }
+        return wrapper;
+      }
+
+      async function loadExternalView(routeKey) {
+        const def = DYNAMIC_ROUTES[routeKey];
+        if (!def || !def.file) return;
+
+        if (isLoadingDynamic) return;
+        isLoadingDynamic = true;
+        currentDynamic = routeKey; // mark intent early
+
+        showGlobalLoader(300);
+        dynamicHost.innerHTML = '';
+
+        try {
+          const res = await fetch(def.file, { cache: 'no-cache' });
+          const html = await res.text();
+
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const viewRoot = doc.querySelector('[data-view-root]') || doc.body || doc;
+
+          // Inject wrapper (without scripts)
+          const wrapperClone = sanitizeCloneWithoutScripts(viewRoot);
+          dynamicHost.appendChild(wrapperClone);
+
+          // Execute scripts in order
+          const scripts = Array.from(viewRoot.querySelectorAll('script'));
+          for (const s of scripts) {
+            if (s.src) {
+              await loadScriptOnce(s.src);
+            } else {
+              const el = document.createElement('script');
+              el.textContent = s.textContent || '';
+              dynamicHost.appendChild(el);
+            }
+          }
+
+          dynamicHost.dispatchEvent(new CustomEvent('spa:view:mounted', { detail: { route: routeKey, host: dynamicHost } }));
+        } catch (e) {
+          dynamicHost.innerHTML = `<div class="container"><p style="color:var(--error);">Failed to load ${def.title || 'view'}.</p></div>`;
+          currentDynamic = null; // allow retry
+        } finally {
+          isLoadingDynamic = false;
+        }
+      }
+
+      function showSection(sectionId) {
+        const toShow = visibleTargetFor(sectionId);
+        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+        if (toShow === 'dynamic') {
+          document.getElementById('dynamic-section').classList.add('active');
+          if (sectionId !== currentDynamic && !isLoadingDynamic) {
+            loadExternalView(sectionId);
+          } else {
+            showGlobalLoader(300);
+          }
+        } else {
+          if (currentDynamic && toShow !== 'dynamic') {
+            dynamicHost.innerHTML = '';
+            currentDynamic = null;
+          }
+          const el = document.getElementById(`${toShow}-section`);
+          if (el) el.classList.add('active');
+          showGlobalLoader(300);
+        }
+
+        setActiveNav(sectionId);
+        document.dispatchEvent(new CustomEvent('navigate', { detail: { section: sectionId, visible: toShow } }));
+      }
+
+      function navigate(sectionId) {
+        const resolved = resolveRoute(sectionId);
+        showGlobalLoader(300);
+
+        // Gate private routes (root and children)
+        if (isPrivateRoute(resolved) && !hasPrivateAccess) {
+          pendingPrivateRoute = resolved;         // remember where the user wanted to go
+          if (window.location.hash !== '#private') {
+            window.location.hash = 'private';     // normalize hash to private index
+          }
+          openPasswordModal();
+          showSection('home');                    // keep user on home until unlocked
+          return;
+        }
+
+        if (resolved === 'home') {
+          const was = window.location.hash;
+          if (was) {
+            const url = window.location.pathname + window.location.search;
+            history.pushState(null, '', url);
+          }
+          const url = window.location.pathname + window.location.search;
+          history.replaceState(null, '', url);
+          showSection('home');
+          return;
+        }
+
+        if (window.location.hash !== `#${resolved}`) {
+          window.location.hash = resolved; // hashchange will render
+        } else {
+          showSection(resolved);
+        }
+      }
+
+      function handleHashChange() {
+        const raw = window.location.hash || '';
+        const section = resolveRoute((raw.replace('#', '').trim() || 'home'));
+
+        // Gate on reload/direct hash for private child routes too
+        if (isPrivateRoute(section) && !hasPrivateAccess) {
+          pendingPrivateRoute = section;
+          openPasswordModal();
+          showSection('home');
+          return;
+        }
+
+        showSection(section);
+      }
+
+      // Bind navigation clicks
+      document.querySelectorAll('.sidebar-nav-link[data-section], .mobile-nav-item[data-section]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const section = link.getAttribute('data-section');
+          navigate(section);
+        });
+      });
+
+      // Route in-page route links
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a[href^="#"]');
+        if (!a) return;
+        const hash = a.getAttribute('href').slice(1);
+        if (!hash) return;
+        e.preventDefault();
+        navigate(hash);
+      });
+
+      window.addEventListener('hashchange', handleHashChange);
+      handleHashChange(); // initial
     })();
   </script>
 </body>
