@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/icon" href="misc/favicon.ico" />
+  <title>SPA Template</title>
+
+  <!-- Css for Index File -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/theme.misc.css">
+  <link rel="stylesheet" href="css/theme.sidebar.css">
+
+  <style>
+    :root {
+      /* Dark theme colors */
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-card: #252525;
+      --bg-modal: #1a1a1a;
+      --bg-nav: #0c0c0c;
+      --accent-primary: #8c52ff;
+      --accent-secondary: #5e72e4;
+      --text-primary: #f8f9fa;
+      --text-secondary: #b0b6bc;
+      --text-tertiary: #7d8597;
+      --card-shadow: 0 8px 16px #0000004d;
+      --card-hover: #323232;
+      --success: #2dce89;
+      --warning: #fb6340;
+      --error: #f5365c;
+      --info: #11cdef;
+      --ring: 0 0 0 3px rgb(140 82 255 / 25%);
+      --radius: 14px;
+    }
+
+    /* Light theme colors */
+    html[data-theme="light"] {
+      --bg-primary: #f5efff;
+      --bg-secondary: #e7dcff;
+      --bg-card: #ffffff;
+      --bg-modal: #f2eaf8;
+      --bg-nav: #d7caff;
+      --accent-primary: #8c7ae6;
+      --accent-secondary: #6c5ce7;
+      --accent-tertiary: #a29bfe;
+      --text-primary: #2d2d2d;
+      --text-secondary: #5c5c7a;
+      --text-tertiary: #8a8aab;
+      --card-shadow: 0 4px 12px #6a11cb0d;
+      --card-hover: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow-x: hidden;
+      color: var(--text-primary);
+    }
+
+    @supports (min-height: 100svh) {
+      body {
+        min-height: 100svh;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        min-height: 100svh;
+        padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    .container {
+      background-color: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid color-mix(in srgb, var(--accent-primary) 15%, transparent);
+      width: 100%;
+      padding: 30px;
+      max-width: 1200px;
+      margin: 20px auto;
+      flex: 1;
+      backdrop-filter: saturate(120%) blur(2px);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: auto;
+        border-radius: 0;
+      }
+    }
+
+    .nav-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    @media (min-width: 769px) {
+      .nav-container {
+        flex-direction: row;
+      }
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      font-size: 28px;
+      letter-spacing: .2px;
+    }
+
+    .rainbow-text {
+      background: linear-gradient(45deg, #e63f3f, #df8d14, #51ee51, #5b5be9, #9b36df);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: prideAnimation 8s ease infinite;
+    }
+
+    @keyframes prideAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .content-section {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
+    /* theme switcher */
+    .icon-toggle {
+      position: relative;
+      font-size: 0;
+      outline: none;
+    }
+
+    .icon-toggle:focus-visible {
+      box-shadow: var(--ring);
+    }
+
+    #theme-toggle-desktop::before,
+    #theme-toggle-mobile::before {
+      font: var(--fa-font-solid);
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      content: "\f186";
+    }
+
+    html[data-theme="light"] #theme-toggle-desktop::before,
+    html[data-theme="light"] #theme-toggle-mobile::before {
+      content: "\f185";
+    }
+
+    .sidebar-nav-icon i,
+    .mobile-nav-icon i {
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav-container">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <h1 class="sidebar-title rainbow-text">Tools Collection</h1>
+      <nav>
+        <ul class="sidebar-nav">
+          <li class="sidebar-nav-item">
+            <a href="" class="sidebar-nav-link active" data-section="home" aria-label="Home">
+              <span class="sidebar-nav-icon"><i class="fa-solid fa-house"></i></span>
+              <span>Home</span>
+            </a>
+          </li>
+          <li class="sidebar-nav-item">
+            <a href="" class="sidebar-nav-link" data-section="new" aria-label="New">
+              <span class="sidebar-nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+              <span>New</span>
+            </a>
+          </li>
+
+          <!-- Theme toggle in sidebar -->
+          <li class="theme-toggle-item" aria-label="Theme toggle">
+            <span>Theme</span>
+            <button id="theme-toggle-desktop" class="icon-toggle" aria-label="Toggle theme"
+              title="Toggle theme">🌙</button>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Home Section -->
+      <section id="home-section" class="content-section active">
+        <div class="container">
+          <h1 class="rainbow-text"><i class="fas fa-toolbox"></i> Basic Collection</h1>
+
+          <div class="tools-grid">
+
+            <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
+              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
+                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
+                Ad eos vel temporibus?</p>
+              <a href="#" class="tool-link">Open</a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- New Section -->
+      <section id="new-section" class="content-section">
+        <div class="container">
+          <h1 class="rainbow-text"><i class="fas fa-star"></i> Upcoming</h1>
+          <div class="tools-grid">
+
+            <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
+              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
+                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
+                Ad eos vel temporibus?</p>
+              <a href="#" class="tool-link">Open</a>
+            </div>
+
+            <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
+              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
+                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
+                Ad eos vel temporibus?</p>
+              <a href="#" class="tool-link">Open</a>
+            </div>
+
+            <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
+              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt.</p>
+              <a href="#" class="tool-link">Open</a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Dynamic Route Host (for loading external tool pages) -->
+      <section id="dynamic-section" class="content-section" data-dynamic="true">
+        <div id="dynamic-host"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav" aria-label="Primary">
+    <a href="" class="mobile-nav-item active" data-section="home" aria-label="Home">
+      <span class="mobile-nav-icon"><i class="fa-solid fa-house"></i></span>
+      <span class="mobile-nav-text">Home</span>
+    </a>
+    <a href="" class="mobile-nav-item" data-section="new" aria-label="New">
+      <span class="mobile-nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+      <span class="mobile-nav-text">New</span>
+    </a>
+
+    <!-- Theme toggle in mobile bar -->
+    <button class="mobile-nav-item icon-toggle" id="theme-toggle-mobile" aria-label="Toggle theme"
+      title="Toggle theme">🌙</button>
+  </nav>
+
+  <!-- Global Center Loader -->
+  <div id="global-loader" class="global-loader" aria-hidden="true">
+    <div class="dots" aria-label="Loading">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <script src="js/main.theme.js"></script>
+
+  <script>
+    (function () {
+      // Global script loader
+      const LOADED_SCRIPTS = new Set();
+      async function loadScriptOnce(src) {
+        if (!src || LOADED_SCRIPTS.has(src)) return;
+        await new Promise((resolve) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = false;
+          s.onload = () => { LOADED_SCRIPTS.add(src); resolve(); };
+          s.onerror = () => resolve();
+          document.head.appendChild(s);
+        });
+      }
+      window.loadScriptOnce = loadScriptOnce;
+    })();
+  </script>
+</body>
+
+</html>
