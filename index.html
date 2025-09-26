@@ -15,6 +15,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/tools.flagquiz.css">
+  <link rel="stylesheet" href="css/tools.idiomdict.css">
 
   <style>
     :root {
@@ -293,19 +294,9 @@
           <div class="tools-grid">
 
             <div class="tool-card">
-              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
-              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
-                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
-                Ad eos vel temporibus?</p>
-              <a href="#" class="tool-link">Open</a>
-            </div>
-
-            <div class="tool-card">
-              <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
-              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
-                corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
-                Ad eos vel temporibus?</p>
-              <a href="#" class="tool-link">Open</a>
+              <h2><span class="icon"><i class="fa-solid fa-book-open"></i></span> Idioms Library</h2>
+              <p>Browse over two thousands of idioms with quick meanings.</p>
+              <a href="#new-idiom" class="tool-link">Read Idioms</a>
             </div>
 
             <div class="tool-card">
@@ -371,6 +362,7 @@
 
   <script src="js/main.theme.js"></script>
   <script src="js/main.hash.js"></script>
+  <script src="js/main.routes.js"></script>
 
   <script>
     (function () {
@@ -475,16 +467,6 @@
       document.addEventListener('passwordRequested', openPasswordModal);
 
       // Router helpers
-      
-      const STATIC_SECTIONS = ['home', 'private', 'new'];
-      const DYNAMIC_ROUTES = {
-        'home-flag': {
-          file: 'html/flagquiz.html',
-          parent: 'home',
-          title: 'Country Flag Quiz'
-        },
-      };
-
       const dynamicHost = document.getElementById('dynamic-host');
       let currentDynamic = null;        // dynamic route currently mounted
       let isLoadingDynamic = false;     // prevent duplicate async loads
