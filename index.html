@@ -13,6 +13,9 @@
   <link rel="stylesheet" href="css/theme.sidebar.css">
   <link rel="stylesheet" href="css/theme.password.css">
 
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/tools.flagquiz.css">
+
   <style>
     :root {
       /* Dark theme colors */
@@ -248,6 +251,12 @@
           <div class="tools-grid">
 
             <div class="tool-card">
+              <h2><span class="icon"><i class="fa-solid fa-flag"></i></span> Country Flag Quiz</h2>
+              <p>Guess the country from its flag.</p>
+              <a href="#home-flag" class="tool-link">Play Flag Guesser</a>
+            </div>
+
+            <div class="tool-card">
               <h2><span class="icon"><i class="fa-solid fa-arrows-rotate"></i></span> Placeholder</h2>
               <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis soluta mollitia deserunt est
                 corrupti, voluptas cum dolorum neque odit dicta itaque accusantium molestiae dignissimos, laborum nemo?
@@ -323,6 +332,9 @@
       <span class="mobile-nav-text">Home</span>
     </a>
     <a href="" class="mobile-nav-item" id="mobile-private-link" data-section="private" aria-label="Private">
+      <span class="mobile-nav-icon"><i class="fa-solid fa-lock"></i></span>
+      <span class="mobile-nav-text">Private</span>
+    </a>
     <a href="" class="mobile-nav-item" data-section="new" aria-label="New">
       <span class="mobile-nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
       <span class="mobile-nav-text">New</span>
@@ -465,7 +477,13 @@
       // Router helpers
       
       const STATIC_SECTIONS = ['home', 'private', 'new'];
-      const DYNAMIC_ROUTES = {};
+      const DYNAMIC_ROUTES = {
+        'home-flag': {
+          file: 'html/flagquiz.html',
+          parent: 'home',
+          title: 'Country Flag Quiz'
+        },
+      };
 
       const dynamicHost = document.getElementById('dynamic-host');
       let currentDynamic = null;        // dynamic route currently mounted

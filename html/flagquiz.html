@@ -1,0 +1,191 @@
+<!-- Flag Quiz for #dynamic-section -->
+<div id="flag-quiz" data-view-root>
+  <link rel="stylesheet" href="css/tools.flagquiz.css" />
+  
+  <div class="container">
+    <h1 class="rainbow-text">Country Flag Quiz</h1>
+    <div class="score-board">
+      <div class="score-item">
+        <div class="score-value" id="total-score">0</div>
+        <div class="score-label">Total</div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" id="win-score">0</div>
+        <div class="score-label">Correct</div>
+      </div>
+      <div class="score-item">
+        <div class="score-value" id="lose-score">0</div>
+        <div class="score-label">Incorrect</div>
+      </div>
+    </div>
+
+    <div class="quiz-area">
+      <div class="flag-container">
+        <img id="flag-img" class="flag-img" src="" alt="Country flag" />
+      </div>
+
+      <div class="options-container" id="options-container"></div>
+    </div>
+    <div id="message" class="message"></div>
+    <p>Guess the country by its flag. Select one of the four options.</p>
+  </div>
+
+  <script>
+    (function () {
+      // Elements
+      const flagImg = document.getElementById('flag-img');
+      const optionsContainer = document.getElementById('options-container');
+      const messageEl = document.getElementById('message');
+      const totalScoreEl = document.getElementById('total-score');
+      const winScoreEl = document.getElementById('win-score');
+      const loseScoreEl = document.getElementById('lose-score');
+
+      // Scores
+      let totalQuestions = 0;
+      let correctAnswers = 0;
+      let incorrectAnswers = 0;
+
+      // Quiz state
+      let currentCountry = null;
+      let options = [];
+      let answered = false;
+      let timeoutId = null;
+      let usedCountries = []; // track used
+
+      // Data
+      const countryData = { "ad": "Andorra", "ae": "United Arab Emirates", "af": "Afghanistan", "ag": "Antigua and Barbuda", "ai": "Anguilla", "al": "Albania", "am": "Armenia", "ao": "Angola", "aq": "Antarctica", "ar": "Argentina", "as": "American Samoa", "at": "Austria", "au": "Australia", "aw": "Aruba", "ax": "Aland Islands", "az": "Azerbaijan", "ba": "Bosnia and Herzegovina", "bb": "Barbados", "bd": "Bangladesh", "be": "Belgium", "bf": "Burkina Faso", "bg": "Bulgaria", "bh": "Bahrain", "bi": "Burundi", "bj": "Benin", "bl": "Saint Barthelemy", "bm": "Bermuda", "bn": "Brunei", "bo": "Bolivia", "bq": "Caribbean Netherlands", "br": "Brazil", "bs": "Bahamas", "bt": "Bhutan", "bv": "Bouvet Island", "bw": "Botswana", "by": "Belarus", "bz": "Belize", "ca": "Canada", "cc": "Cocos Island", "cd": "DR Congo", "cf": "Central African Republic", "cg": "Republic of the Congo", "ch": "Switzerland", "ci": "Ivory Coast", "ck": "Cook Islands", "cl": "Chile", "cm": "Cameroon", "cn": "China", "co": "Colombia", "cr": "Costa Rica", "cu": "Cuba", "cv": "Cape Verde", "cw": "Curacao", "cx": "Christmas Island", "cy": "Cyprus", "cz": "Czechia", "de": "Germany", "dj": "Djibouti", "dk": "Denmark", "dm": "Dominica", "do": "Dominican Republic", "dz": "Algeria", "ec": "Ecuador", "ee": "Estonia", "eg": "Egypt", "eh": "Western Sahara", "er": "Eritrea", "es": "Spain", "et": "Ethiopia", "eu": "European Union", "fi": "Finland", "fj": "Fiji", "fk": "Falkland Islands", "fm": "Micronesia", "fo": "Faroe Islands", "fr": "France", "ga": "Gabon", "gb": "United Kingdom", "gd": "Grenada", "ge": "Georgia", "gf": "French Guiana", "gg": "Guernsey", "gh": "Ghana", "gi": "Gibraltar", "gl": "Greenland", "gm": "Gambia", "gn": "Guinea", "gp": "Guadeloupe", "gq": "Equatorial Guinea", "gr": "Greece", "gs": "South Georgia", "gt": "Guatemala", "gu": "Guam", "gw": "Guinea Bissau", "gy": "Guyana", "hk": "Hong Kong", "hm": "Heard Island and McDonald Islands", "hn": "Honduras", "hr": "Croatia", "ht": "Haiti", "hu": "Hungary", "id": "Indonesia", "ie": "Ireland", "il": "Israel", "im": "Isle of Man", "in": "India", "io": "British Indian Ocean Territory", "iq": "Iraq", "ir": "Iran", "is": "Iceland", "it": "Italy", "je": "Jersey", "jm": "Jamaica", "jo": "Jordan", "jp": "Japan", "ke": "Kenya", "kg": "Kyrgyzstan", "kh": "Cambodia", "ki": "Kiribati", "km": "Comoros", "kn": "Saint Kitts and Nevis", "kp": "North Korea", "kr": "South Korea", "kw": "Kuwait", "ky": "Cayman Islands", "kz": "Kazakhstan", "la": "Laos", "lb": "Lebanon", "lc": "Saint Lucia", "li": "Liechtenstein", "lk": "Sri Lanka", "lr": "Liberia", "ls": "Lesotho", "lt": "Lithuania", "lu": "Luxembourg", "lv": "Latvia", "ly": "Libya", "ma": "Morocco", "mc": "Monaco", "md": "Moldova", "me": "Montenegro", "mf": "Saint Martin", "mg": "Madagascar", "mh": "Marshall Islands", "mk": "North Macedonia", "ml": "Mali", "mm": "Myanmar", "mn": "Mongolia", "mo": "Macau", "mp": "Northern Mariana Islands", "mq": "Martinique", "mr": "Mauritania", "ms": "Montserrat", "mt": "Malta", "mu": "Mauritius", "mv": "Maldives", "mw": "Malawi", "mx": "Mexico", "my": "Malaysia", "mz": "Mozambique", "na": "Namibia", "nc": "New Caledonia", "ne": "Niger", "nf": "Norfolk Island", "ng": "Nigeria", "ni": "Nicaragua", "nl": "Netherlands", "no": "Norway", "np": "Nepal", "nr": "Nauru", "nu": "Niue", "nz": "New Zealand", "om": "Oman", "pa": "Panama", "pe": "Peru", "pf": "French Polynesia", "pg": "Papua New Guinea", "ph": "Philippines", "pk": "Pakistan", "pl": "Poland", "pm": "Saint Pierre and Miquelon", "pn": "Pitcairn Islands", "pr": "Puerto Rico", "ps": "Palestine", "pt": "Portugal", "pw": "Palau", "py": "Paraguay", "qa": "Qatar", "re": "Reunion", "ro": "Romania", "rs": "Serbia", "ru": "Russia", "rw": "Rwanda", "sa": "Saudi Arabia", "sb": "Solomon Islands", "sc": "Seychelles", "sd": "Sudan", "se": "Sweden", "sg": "Singapore", "sh": "Saint Helena", "si": "Slovenia", "sj": "Svalbard and Jan Mayen", "sk": "Slovakia", "sl": "Sierra Leone", "sm": "San Marino", "sn": "Senegal", "so": "Somalia", "sr": "Suriname", "ss": "South Sudan", "st": "Sao Tome and Principe", "sv": "El Salvador", "sx": "Sint Maarten", "sy": "Syria", "sz": "Eswatini", "tc": "Turks and Caicos Islands", "td": "Chad", "tf": "French Southern and Antarctic Lands", "tg": "Togo", "th": "Thailand", "tj": "Tajikistan", "tk": "Tokelau", "tl": "Timor-Leste", "tm": "Turkmenistan", "tn": "Tunisia", "to": "Tonga", "tr": "Turkey", "tt": "Trinidad and Tobago", "tv": "Tuvalu", "tw": "Taiwan", "tz": "Tanzania", "ua": "Ukraine", "ug": "Uganda", "un": "United Nations", "us": "United States", "uy": "Uruguay", "uz": "Uzbekistan", "va": "Vatican City", "vc": "Saint Vincent", "ve": "Venezuela", "vg": "British Virgin Islands", "vi": "US Virgin Islands", "vn": "Vietnam", "vu": "Vanuatu", "wf": "Wallis and Futuna", "ws": "Samoa", "xk": "Kosovo", "ye": "Yemen", "yt": "Mayotte", "za": "South Africa", "zm": "Zambia", "zw": "Zimbabwe" };
+
+      // Initialize
+      initQuiz();
+
+      function initQuiz() {
+        // Clear any existing timeout
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+
+        // Reset state
+        answered = false;
+        messageEl.style.display = 'none';
+
+        // Get all country codes
+        const countryCodes = Object.keys(countryData);
+
+        // Filter already used countries
+        const availableCountries = countryCodes.filter(code => !usedCountries.includes(code));
+
+        if (availableCountries.length === 0) {
+          usedCountries = [];
+        }
+
+        // Get a random country
+        const randomCountryCode = availableCountries[Math.floor(Math.random() * availableCountries.length)];
+        currentCountry = {
+          code: randomCountryCode,
+          name: countryData[randomCountryCode]
+        };
+
+        // Add to used countries
+        usedCountries.push(randomCountryCode);
+
+        // Set the flag image
+        flagImg.src = `https://flagcdn.com/${randomCountryCode}.svg`;
+        flagImg.alt = "Flag";
+        flagImg.draggable = false;
+
+        // Disable right-click
+        flagImg.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+        }, { once: true });
+
+        // Generate options (3 random + correct)
+        options = [currentCountry.name];
+        while (options.length < 4) {
+          const randomCode = countryCodes[Math.floor(Math.random() * countryCodes.length)];
+          const randomCountry = countryData[randomCode];
+          if (!options.includes(randomCountry)) {
+            options.push(randomCountry);
+          }
+        }
+
+        options = shuffleArray(options);
+        renderOptions();
+      }
+
+      function renderOptions() {
+        optionsContainer.innerHTML = '';
+
+        options.forEach(option => {
+          const button = document.createElement('button');
+          button.className = 'option-btn';
+          button.textContent = option;
+          button.addEventListener('click', () => checkAnswer(option));
+          optionsContainer.appendChild(button);
+        });
+      }
+
+      function checkAnswer(selectedOption) {
+        if (answered) return;
+
+        answered = true;
+        totalQuestions++;
+        totalScoreEl.textContent = totalQuestions;
+
+        const optionsButtons = optionsContainer.querySelectorAll('.option-btn');
+
+        optionsButtons.forEach(button => {
+          button.disabled = true;
+        });
+
+        if (selectedOption === currentCountry.name) {
+          // Correct answer
+          correctAnswers++;
+          winScoreEl.textContent = correctAnswers;
+
+          optionsButtons.forEach(button => {
+            if (button.textContent === currentCountry.name) {
+              button.classList.add('correct');
+            }
+          });
+
+          showMessage('Correct! Well done!', 'correct');
+        } else {
+          // Incorrect answer
+          incorrectAnswers++;
+          loseScoreEl.textContent = incorrectAnswers;
+
+          optionsButtons.forEach(button => {
+            if (button.textContent === selectedOption) {
+              button.classList.add('incorrect');
+            }
+            if (button.textContent === currentCountry.name) {
+              button.classList.add('correct');
+            }
+          });
+
+          showMessage(`Incorrect! The correct answer is ${currentCountry.name}.`, 'incorrect');
+        }
+
+        timeoutId = setTimeout(() => {
+          initQuiz();
+        }, 2000);
+      }
+
+      function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = `message ${type}`;
+        messageEl.style.display = 'block';
+      }
+
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+    })();
+  </script>
+</div>
