@@ -1,0 +1,219 @@
+/* #anagram-dict */
+#anagram-dict .container {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  padding: 28px;
+  max-width: 720px;
+  margin: 20px auto;
+}
+
+#anagram-dict .input-group {
+  margin-bottom: 16px;
+}
+
+#anagram-dict label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+#anagram-dict input[type="text"] {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--bg-card);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+#anagram-dict input[type="text"]:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+#anagram-dict .wordlist-group {
+  margin: 16px 0;
+  padding: 14px;
+  background-color: var(--bg-secondary);
+  border-radius: 10px;
+  border-left: 4px solid var(--accent-primary);
+}
+
+#anagram-dict .wordlist-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#anagram-dict .wordlist-btn {
+  padding: 8px 14px;
+  border: 2px solid var(--bg-card);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#anagram-dict .wordlist-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+#anagram-dict .wordlist-btn.active {
+  background: linear-gradient(45deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary) 50%, #2575fc));
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+#anagram-dict #ua-unscramble {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(45deg, var(--accent-primary), #2575fc);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 16px rgba(106, 17, 203, 0.35);
+  margin-top: 6px;
+}
+
+#anagram-dict #ua-unscramble:hover {
+  opacity: 0.96;
+  transform: translateY(-1px);
+}
+
+#anagram-dict #ua-unscramble:active {
+  transform: translateY(0);
+}
+
+#anagram-dict #ua-unscramble:disabled {
+  background: #cfcfcf;
+  color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+#anagram-dict .loader {
+  display: none;
+  text-align: center;
+  margin: 16px 0;
+}
+
+#anagram-dict .loader div {
+  width: 12px;
+  height: 12px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 4px;
+  animation: ua-bounce 1.4s infinite ease-in-out both;
+}
+
+#anagram-dict .loader div:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+#anagram-dict .loader div:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes ua-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1);
+  }
+}
+
+#anagram-dict .error {
+  color: var(--error);
+  margin-top: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+#anagram-dict .result-container {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--bg-secondary);
+  border-radius: 10px;
+  border-left: 4px solid var(--accent-primary);
+}
+
+#anagram-dict .result {
+  font-size: 18px;
+  min-height: 24px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#anagram-dict .word-list {
+  margin-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+#anagram-dict .word-item {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: copy;
+  transition: transform 0.08s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+#anagram-dict .word-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+#anagram-dict .stats {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+#anagram-dict .copy-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--success, #10b981);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 1000;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+#anagram-dict .copy-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}

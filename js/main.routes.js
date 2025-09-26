@@ -12,4 +12,10 @@ const DYNAMIC_ROUTES = {
         title: 'Idioms Library'
     },
 
+    'private-anagram': {
+        file: 'html/anagramdict.html',
+        parent: 'private',
+        title: 'Anagram Solver'
+    },
+
 };

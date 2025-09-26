@@ -1,0 +1,264 @@
+<!-- Anagram Solver for #dynamic-section -->
+<div id="anagram-dict" data-view-root>
+  <link rel="stylesheet" href="css/tools.anagramdict.css" />
+
+  <div class="container">
+    <h1 class="rainbow-text">Anagram Solver</h1>
+
+    <div class="wordlist-group">
+      <label>Search in:</label>
+      <div class="wordlist-buttons" id="ua-list-buttons">
+        <button class="wordlist-btn active" data-list="countryName">Countries</button>
+        <button class="wordlist-btn active" data-list="fruitName">Fruits</button>
+        <button class="wordlist-btn active" data-list="animalName">Animals</button>
+        <button class="wordlist-btn active" data-list="cryptoWord">Crypto</button>
+        <button class="wordlist-btn active" data-list="idiomList">Idioms</button>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="ua-scrambled">Scrambled Word</label>
+      <input type="text" id="ua-scrambled" placeholder="Enter scrambled word (e.g., 'abedofroses')" />
+    </div>
+
+    <button id="ua-unscramble">Solve</button>
+
+    <div class="loader" id="ua-loader" aria-hidden="true">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+
+    <div class="error" id="ua-error" role="alert" style="display:none;"></div>
+
+    <div class="result-container" id="ua-result-wrap" style="display:none;">
+      <div id="ua-result" class="result"></div>
+      <div class="word-list" id="ua-list"></div>
+      <div class="stats" id="ua-stats"></div>
+    </div>
+
+    <div class="copy-notification" id="ua-toast">Copied to clipboard!</div>
+  </div>
+
+  <script>
+    (function () {
+      const root = document.getElementById('anagram-dict');
+      if (!root || root.dataset.inited === '1') return;
+      root.dataset.inited = '1';
+
+      const scrambledEl = root.querySelector('#ua-scrambled');
+      const buttonsWrap = root.querySelector('#ua-list-buttons');
+      const actionBtn = root.querySelector('#ua-unscramble');
+      const resultEl = root.querySelector('#ua-result');
+      const listEl = root.querySelector('#ua-list');
+      const statsEl = root.querySelector('#ua-stats');
+      const loaderEl = root.querySelector('#ua-loader');
+      const errorEl = root.querySelector('#ua-error');
+      const resultWrap = root.querySelector('#ua-result-wrap');
+      const toastEl = root.querySelector('#ua-toast');
+
+      let toastTimer = null;
+
+      // Selected lists default to all active buttons
+      const selectedLists = new Set(
+        Array.from(buttonsWrap.querySelectorAll('.wordlist-btn.active')).map(b => b.dataset.list)
+      );
+
+      const wordLists = {
+        countryName: [],
+        fruitName: [],
+        animalName: [],
+        cryptoWord: [],
+        idiomList: []
+      };
+
+      function copyToClipboard(text) {
+        const fallback = () => {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch (_) { }
+          document.body.removeChild(ta);
+          showToast();
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(showToast).catch(fallback);
+        } else {
+          fallback();
+        }
+      }
+
+      function showToast() {
+        if (!toastEl) return;
+        toastEl.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('show');
+          toastTimer = null;
+        }, 1600);
+      }
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+      }
+      function clearError() {
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+      }
+
+      // Toggle button selection
+      buttonsWrap.addEventListener('click', (e) => {
+        const btn = e.target.closest('.wordlist-btn');
+        if (!btn) return;
+        const list = btn.dataset.list;
+        btn.classList.toggle('active');
+        if (btn.classList.contains('active')) selectedLists.add(list);
+        else selectedLists.delete(list);
+      });
+
+      scrambledEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') actionBtn.click();
+      });
+
+      actionBtn.addEventListener('click', () => {
+        clearError();
+        resultEl.textContent = '';
+        listEl.innerHTML = '';
+        statsEl.textContent = '';
+        resultWrap.style.display = 'none';
+
+        const cleaned = String(scrambledEl.value || '')
+          .trim()
+          .replace(/[^\p{L}\p{N}]/gu, '') // remove punctuation and spaces
+          .toLowerCase();
+
+        if (!cleaned) {
+          showError('Please enter a scrambled word.');
+          return;
+        }
+        if (selectedLists.size === 0) {
+          showError('Please select at least one word list to search in.');
+          return;
+        }
+
+        loaderEl.style.display = 'block';
+        setTimeout(() => {
+          try {
+            const { matches, searchedWords } = unscramble(cleaned, Array.from(selectedLists));
+            loaderEl.style.display = 'none';
+            resultWrap.style.display = 'block';
+
+            if (!matches.length) {
+              resultEl.textContent = 'No matching words found.';
+              resultEl.style.color = 'var(--error, #dc3545)';
+            } else {
+              resultEl.textContent = `Found ${matches.length} possible match(es):`;
+              resultEl.style.color = 'var(--text-primary, #1f2937)';
+              matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'word-item';
+                item.textContent = m.word;
+                item.title = `Click to copy (${m.list})`;
+                item.addEventListener('click', () => copyToClipboard(m.word));
+                listEl.appendChild(item);
+              });
+              statsEl.textContent = `Searched in ${searchedWords.toLocaleString()} words across ${selectedLists.size} list(s)`;
+              if (matches.length === 1) copyToClipboard(matches[0].word);
+            }
+          } catch (err) {
+            loaderEl.style.display = 'none';
+            showError('An error occurred while processing the word.');
+            console.error(err);
+          }
+        }, 80);
+      });
+
+      function unscramble(scrambled, lists) {
+        const freq = Object.create(null);
+        for (const ch of scrambled) freq[ch] = (freq[ch] || 0) + 1;
+
+        const matches = [];
+        let searched = 0;
+
+        for (const listName of lists) {
+          const arr = Array.isArray(wordLists[listName]) ? wordLists[listName] : [];
+          for (let w of arr) {
+            searched++;
+            const clean = String(w).replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+            if (clean.length !== scrambled.length) continue;
+
+            // quick letter frequency compare
+            const f = Object.create(null);
+            for (const ch of clean) f[ch] = (f[ch] || 0) + 1;
+
+            let ok = true;
+            for (const k in freq) {
+              if (freq[k] !== f[k]) { ok = false; break; }
+            }
+            if (ok) {
+              // ensure no extra letters beyond scrambled
+              for (const k in f) {
+                if (f[k] !== freq[k]) { ok = false; break; }
+              }
+            }
+            if (ok) matches.push({ word: String(w), list: listName });
+          }
+        }
+
+        return { matches, searchedWords: searched };
+      }
+
+      async function loadScript(src) {
+        await new Promise((resolve) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = resolve;
+          s.onerror = resolve;
+          document.head.appendChild(s);
+        });
+      }
+      async function ensureWords() {
+        // If already present, skip
+        try {
+          if (typeof countryName !== 'undefined' ||
+            typeof fruitName !== 'undefined' ||
+            typeof animalName !== 'undefined' ||
+            typeof cryptoWord !== 'undefined' ||
+            typeof idiomList !== 'undefined') return;
+        } catch (_) { }
+
+        await loadScript('js/wordlist.anagramdict.js');
+
+      }
+
+      function hydrateLists() {
+        wordLists.countryName = (typeof countryName !== 'undefined' && Array.isArray(countryName)) ? countryName : [];
+        wordLists.fruitName = (typeof fruitName !== 'undefined' && Array.isArray(fruitName)) ? fruitName : [];
+        wordLists.animalName = (typeof animalName !== 'undefined' && Array.isArray(animalName)) ? animalName : [];
+        wordLists.cryptoWord = (typeof cryptoWord !== 'undefined' && Array.isArray(cryptoWord)) ? cryptoWord : [];
+        wordLists.idiomList = (typeof idiomList !== 'undefined' && Array.isArray(idiomList)) ? idiomList : [];
+        actionBtn.disabled = false;
+      }
+
+      (async () => {
+        actionBtn.disabled = true;
+        await ensureWords();
+        hydrateLists();
+      })();
+
+      // Cleanup
+      const mo = new MutationObserver(() => {
+        if (!root.isConnected) {
+          if (toastTimer) clearTimeout(toastTimer);
+          mo.disconnect();
+        }
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+    })();
+  </script>
+</div>
