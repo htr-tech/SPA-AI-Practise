@@ -1,0 +1,252 @@
+/* #idioms-dict */
+#idioms-dict .container {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  padding: 20px;
+  max-width: 900px;
+  margin: 20px auto;
+}
+
+#idioms-dict .search-container {
+  margin-bottom: 16px;
+}
+
+#idioms-dict .search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color 0.2s ease;
+}
+
+#idioms-dict .search-input-wrap:focus-within {
+  border-color: var(--accent-primary);
+}
+
+#idioms-dict .search-input-wrap svg {
+  color: var(--text-tertiary);
+  flex: 0 0 auto;
+}
+
+#idioms-dict #search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 16px;
+  width: 100%;
+}
+
+#idioms-dict #clear-search {
+  appearance: none;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+#idioms-dict #clear-search:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+#idioms-dict .error {
+  color: var(--error);
+  margin-top: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+/* Alphabet nav */
+#idioms-dict .alphabet-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+#idioms-dict .alphabet-btn {
+  appearance: none;
+  border: 1px solid var(--bg-card);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+#idioms-dict .alphabet-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+}
+
+#idioms-dict .alphabet-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* Results info */
+#idioms-dict .results-info {
+  margin: 8px 0 6px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 14px;
+}
+
+/* List */
+#idioms-dict .idioms-list {
+  min-height: 260px;
+}
+
+#idioms-dict .idiom-item {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-secondary);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: transform 0.08s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  outline: none;
+}
+
+#idioms-dict .idiom-item:hover,
+#idioms-dict .idiom-item:focus {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+#idioms-dict .idiom-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+#idioms-dict .idiom-meaning {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+/* Pagination */
+#idioms-dict .pagination {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  user-select: none;
+}
+
+#idioms-dict .page-btn {
+  appearance: none;
+  border: 1px solid var(--bg-card);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 8px;
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+#idioms-dict .page-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+}
+
+#idioms-dict .page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#idioms-dict .page-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+#idioms-dict .page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  padding: 0 4px;
+}
+
+/* Loading */
+#idioms-dict .loading {
+  text-align: center;
+  padding: 40px 10px;
+  color: var(--text-secondary);
+}
+
+#idioms-dict .spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: idiom-spin 0.8s linear infinite;
+}
+
+@keyframes idiom-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#idioms-dict .copy-notification {
+  position: fixed;
+  right: 20px;
+  top: 40px;
+  background-color: var(--success);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 1000;
+  pointer-events: none;
+  font-weight: 700;
+}
+
+#idioms-dict .copy-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 540px) {
+  #idioms-dict .container {
+    padding: 20px;
+  }
+
+  #idioms-dict .idiom-text {
+    font-size: 17px;
+  }
+
+  #idioms-dict .idiom-meaning {
+    font-size: 14px;
+  }
+}

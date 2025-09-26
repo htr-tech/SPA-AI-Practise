@@ -1,0 +1,282 @@
+<!-- Idioms Dictionary for #dynamic-section-->
+<div id="idioms-dict" data-view-root>
+  <link rel="stylesheet" href="css/tools.idiomdict.css" />
+
+  <div class="container">
+    <h1 class="rainbow-text">Idioms Library</h1>
+
+    <div class="search-container">
+      <div class="search-input-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor"
+            d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.49 3.5S5 6.01 5 9s2.51 5.5 5.5 5.5a6.47 6.47 0 0 0 4.23-1.57l.27.28v.79l4.25 4.25a1 1 0 0 0 1.42-1.42L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z" />
+        </svg>
+        <input type="text" id="search-input" placeholder="Search idioms or meanings..." autocomplete="off"
+          autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Search idioms" />
+        <button id="clear-search" title="Clear search" aria-label="Clear search">&times;</button>
+      </div>
+      <div class="error" id="search-error" role="alert">No idioms found matching your search.</div>
+    </div>
+
+    <div class="alphabet-nav" id="alphabet-nav" aria-label="Alphabet filter"></div>
+
+    <div class="results-info" id="results-info" aria-live="polite"></div>
+
+    <div class="idioms-list" id="idioms-list">
+      <div class="loading" id="loading">
+        <span class="spinner" aria-hidden="true"></span>
+        Loading idioms...
+      </div>
+    </div>
+
+    <div class="pagination" id="pagination" aria-label="Pagination"></div>
+  </div>
+
+  <div class="copy-notification" id="idiomCopyToast">Copied!</div>
+
+  <script>
+    (async function initIdioms() {
+      const root = document.getElementById('idioms-dict');
+      if (!root || root.dataset.inited === '1') return;
+      root.dataset.inited = '1';
+
+      const searchInput = root.querySelector('#search-input');
+      const clearSearchBtn = root.querySelector('#clear-search');
+      const searchError = root.querySelector('#search-error');
+      const alphabetNav = root.querySelector('#alphabet-nav');
+      const idiomsList = root.querySelector('#idioms-list');
+      const pagination = root.querySelector('#pagination');
+      const resultsInfo = root.querySelector('#results-info');
+      const loadingEl = root.querySelector('#loading');
+      const copyToast = root.querySelector('#idiomCopyToast');
+
+      async function loadScript(src) {
+        await new Promise((resolve) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = resolve;
+          s.onerror = resolve;
+          document.head.appendChild(s);
+        });
+      }
+
+      await loadScript('js/wordlist.idiomdict.js');
+
+      let dictCandidate = {};
+      try {
+        dictCandidate = (typeof idiomDict !== 'undefined') ? idiomDict : (globalThis.idiomDict || {});
+      } catch (e) {
+        dictCandidate = globalThis.idiomDict || {};
+      }
+
+      const allIdioms = Object.entries(dictCandidate);
+
+      // If no wordlist found, stop
+      if (!allIdioms.length) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        idiomsList.innerHTML = '<div class="no-results">Dictionary not loaded.</div>';
+        searchError.style.display = 'block';
+        return;
+      }
+
+      let filteredIdioms = [...allIdioms];
+      let currentPage = 1;
+      const idiomsPerPage = 10; // 10 Per Page
+      let currentLetter = 'all';
+      let toastTimer = null;
+
+      function initializeAlphabetNav() {
+        alphabetNav.innerHTML = '';
+        const mkBtn = (label, letter, active = false) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `alphabet-btn${active ? ' active' : ''}`;
+          btn.textContent = label;
+          btn.dataset.letter = letter;
+          btn.addEventListener('click', () => filterByLetter(letter));
+          return btn;
+        };
+        alphabetNav.appendChild(mkBtn('All', 'all', true));
+        for (let i = 65; i <= 90; i++) {
+          const letter = String.fromCharCode(i);
+          alphabetNav.appendChild(mkBtn(letter, letter, false));
+        }
+      }
+
+      function filterByLetter(letter) {
+        currentLetter = letter;
+        currentPage = 1;
+        alphabetNav.querySelectorAll('.alphabet-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.letter === letter);
+        });
+        applyFilters();
+      }
+
+      function applyFilters() {
+        filteredIdioms = (currentLetter === 'all')
+          ? [...allIdioms]
+          : allIdioms.filter(([idiom]) => idiom.charAt(0).toUpperCase() === currentLetter);
+
+        const term = searchInput.value.trim().toLowerCase();
+        if (term) {
+          filteredIdioms = filteredIdioms.filter(([idiom, meaning]) =>
+            idiom.toLowerCase().includes(term) || meaning.toLowerCase().includes(term)
+          );
+        }
+        updateDisplay();
+      }
+
+      function updateDisplay() {
+        renderPagination();
+        renderIdioms();
+        updateResultsInfo();
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(filteredIdioms.length / idiomsPerPage);
+        pagination.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const addBtn = (label, page, disabled = false, active = false) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `page-btn${active ? ' active' : ''}`;
+          btn.textContent = label;
+          btn.disabled = disabled;
+          btn.addEventListener('click', () => {
+            currentPage = page;
+            updateDisplay();
+            idiomsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          pagination.appendChild(btn);
+        };
+
+        addBtn('«', Math.max(1, currentPage - 1), currentPage === 1);
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+            addBtn(String(i), i, false, i === currentPage);
+          } else if (Math.abs(i - currentPage) === 2) {
+            const ell = document.createElement('span');
+            ell.className = 'page-ellipsis';
+            ell.textContent = '…';
+            pagination.appendChild(ell);
+          }
+        }
+        addBtn('»', Math.min(totalPages, currentPage + 1), currentPage === totalPages);
+      }
+
+      function renderIdioms() {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (filteredIdioms.length === 0) {
+          idiomsList.innerHTML = '<div class="no-results">No idioms found. Try a different search or letter.</div>';
+          searchError.style.display = 'block';
+          return;
+        }
+        searchError.style.display = 'none';
+
+        const startIndex = (currentPage - 1) * idiomsPerPage;
+        const endIndex = Math.min(startIndex + idiomsPerPage, filteredIdioms.length);
+        const pageIdioms = filteredIdioms.slice(startIndex, endIndex);
+
+        idiomsList.innerHTML = '';
+        for (const [idiom, meaning] of pageIdioms) {
+          const item = document.createElement('div');
+          item.className = 'idiom-item';
+          item.tabIndex = 0;
+          item.setAttribute('role', 'button');
+          item.setAttribute('aria-label', `Copy idiom: ${idiom}`);
+
+          const top = document.createElement('div');
+          top.className = 'idiom-text';
+          top.textContent = idiom;
+
+          const bottom = document.createElement('div');
+          bottom.className = 'idiom-meaning';
+          bottom.textContent = meaning;
+
+          item.appendChild(top);
+          item.appendChild(bottom);
+
+          item.addEventListener('click', () => {
+            copyToClipboard(`${idiom} -> ${meaning}`);
+          });
+          item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              item.click();
+            }
+          });
+
+          idiomsList.appendChild(item);
+        }
+      }
+
+      function updateResultsInfo() {
+        const total = filteredIdioms.length;
+        if (total === 0) {
+          resultsInfo.textContent = 'No idioms found';
+          return;
+        }
+        if (total <= idiomsPerPage) {
+          resultsInfo.textContent = `Showing all ${total} idioms`;
+          return;
+        }
+        const start = (currentPage - 1) * idiomsPerPage + 1;
+        const end = Math.min(start + idiomsPerPage - 1, total);
+        resultsInfo.textContent = `Showing ${start}–${end} of ${total} idioms`;
+      }
+
+      function copyToClipboard(text) {
+        const fallback = () => {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          ta.style.pointerEvents = 'none';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch (_) { }
+          document.body.removeChild(ta);
+          showToast();
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(showToast).catch(fallback);
+        } else {
+          fallback();
+        }
+      }
+
+      function showToast() {
+        if (!copyToast) return;
+        copyToast.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          copyToast.classList.remove('show');
+          toastTimer = null;
+        }, 1200);
+      }
+
+      let searchTimer = null;
+      searchInput.addEventListener('input', () => {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          currentPage = 1;
+          applyFilters();
+        }, 180);
+      });
+
+      clearSearchBtn.addEventListener('click', () => {
+        if (!searchInput.value) return;
+        searchInput.value = '';
+        currentPage = 1;
+        applyFilters();
+        searchInput.focus();
+      });
+
+      // Init
+      initializeAlphabetNav();
+      applyFilters();
+    })();
+  </script>
+</div>
